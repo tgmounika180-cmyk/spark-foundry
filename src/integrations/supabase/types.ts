@@ -393,6 +393,39 @@ export type Database = {
         }
         Relationships: []
       }
+      stats_overrides: {
+        Row: {
+          created_at: string
+          events_count: number | null
+          id: string
+          mentors_count: number | null
+          programs_count: number | null
+          startups_count: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          events_count?: number | null
+          id?: string
+          mentors_count?: number | null
+          programs_count?: number | null
+          startups_count?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          events_count?: number | null
+          id?: string
+          mentors_count?: number | null
+          programs_count?: number | null
+          startups_count?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -470,6 +503,15 @@ export type Database = {
         Relationships: []
       }
       stats: {
+        Row: {
+          events_count: number | null
+          mentors_count: number | null
+          programs_count: number | null
+          startups_count: number | null
+        }
+        Relationships: []
+      }
+      stats_effective: {
         Row: {
           events_count: number | null
           mentors_count: number | null
