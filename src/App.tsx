@@ -17,6 +17,7 @@ import Footer from "./components/Footer";
 import { RequireAdmin } from "./pages/admin/RequireAdmin";
 import { AdminLayout } from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminLogin from "./pages/admin/AdminLogin";
 import AdminPrograms from "./pages/admin/AdminPrograms";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminApplications from "./pages/admin/AdminApplications";
@@ -44,8 +45,9 @@ const AppRoutes = () => {
         <Route path="/apply" element={<Apply />} />
         <Route path="/contact" element={<Contact />} />
 
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route
-          path="/admin"
+          path="/admin/*"
           element={
             <RequireAdmin>
               <AdminLayout />
