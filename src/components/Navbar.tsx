@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
+import { AuthModal } from "./AuthModal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -16,9 +20,28 @@ const navLinks = [
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
-    <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+    <>
+      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
@@ -38,9 +61,27 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ))}
-            <Link to="/apply">
-              <Button size="sm">Apply Now</Button>
-            </Link>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-2">
+                    <User className="w-4 h-4" />
+                    Account
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/apply">My Applications</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut} className="gap-2">
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button size="sm" onClick={() => setAuthModalOpen(true)}>Sign In</Button>
+            )}
           </div>
 
           {/* Mobile Toggle */}
@@ -73,15 +114,29 @@ const Navbar = () => {
                     {link.label}
                   </Link>
                 ))}
-                <Link to="/apply">
-                  <Button size="sm" className="w-full" onClick={() => setIsOpen(false)}>Apply Now</Button>
-                </Link>
+                {user ? (
+                  <>
+                    <Link to="/apply" onClick={() => setIsOpen(false)}>
+                      <Button size="sm" variant="outline" className="w-full">My Applications</Button>
+                    </Link>
+                    <Button size="sm" variant="outline" className="w-full gap-2" onClick={() => { handleSignOut(); setIsOpen(false); }}>
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" className="w-full" onClick={() => { setAuthModalOpen(true); setIsOpen(false); }}>
+                    Sign In
+                  </Button>
+                )}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
     </nav>
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
+    </>
   );
 };
 

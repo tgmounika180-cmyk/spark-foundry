@@ -1,76 +1,44 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Users, TrendingUp, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const startups = [
-  { 
-    name: "VoiceAI Labs", 
-    sector: "AI/ML", 
-    stage: "Series A", 
-    team: 28, 
-    description: "Conversational AI platform for enterprise customer service. Raised ₹45 Cr from Sequoia.",
-    traction: "500+ enterprise clients"
-  },
-  { 
-    name: "AgriConnect", 
-    sector: "AgriTech", 
-    stage: "Seed", 
-    team: 15, 
-    description: "Direct farm-to-market platform connecting 50,000+ farmers with buyers across India.",
-    traction: "₹120 Cr GMV"
-  },
-  { 
-    name: "HealthFirst", 
-    sector: "HealthTech", 
-    stage: "Series B", 
-    team: 85, 
-    description: "Telemedicine and diagnostics platform serving Tier 2/3 cities. 2M+ consultations completed.",
-    traction: "Profitable since 2024"
-  },
-  { 
-    name: "SkillNest", 
-    sector: "EdTech", 
-    stage: "Growth", 
-    team: 42, 
-    description: "Upskilling platform for working professionals with job placement guarantee.",
-    traction: "15,000+ placements"
-  },
-  { 
-    name: "GreenGrid Energy", 
-    sector: "CleanTech", 
-    stage: "Seed", 
-    team: 12, 
-    description: "Smart energy management for commercial buildings. 30% energy cost reduction guaranteed.",
-    traction: "200+ buildings"
-  },
-  { 
-    name: "PayEasy", 
-    sector: "FinTech", 
-    stage: "Pre-Series A", 
-    team: 22, 
-    description: "Digital payment solutions for small retailers and street vendors across India.",
-    traction: "1M+ merchants"
-  },
-  { 
-    name: "LogiTrack", 
-    sector: "Logistics", 
-    stage: "Series A", 
-    team: 35, 
-    description: "Real-time supply chain visibility platform for e-commerce and manufacturing.",
-    traction: "₹80 Cr ARR"
-  },
-  { 
-    name: "HomeChef", 
-    sector: "Food & Bev", 
-    stage: "Seed", 
-    team: 18, 
-    description: "Marketplace connecting home chefs with customers for authentic regional cuisines.",
-    traction: "5,000+ chefs, 8 cities"
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const Startups = () => {
+  const navigate = useNavigate();
+  const [startups, setStartups] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedSector, setSelectedSector] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchStartups();
+  }, [selectedSector]);
+
+  const fetchStartups = async () => {
+    let query = supabase
+      .from('startups')
+      .select('*')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    if (selectedSector) {
+      query = query.eq('sector', selectedSector);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching startups:', error);
+    } else {
+      setStartups(data || []);
+    }
+    setLoading(false);
+  };
+
+  const sectors = ["AI/ML", "HealthTech", "FinTech", "EdTech", "AgriTech", "CleanTech"];
+
   return (
     <div className="min-h-screen">
       <section className="py-20 px-6 gradient-hero text-primary-foreground">
@@ -80,21 +48,37 @@ const Startups = () => {
           className="max-w-4xl mx-auto text-center"
         >
           <h1 className="text-5xl md:text-6xl font-bold mb-6">Our Portfolio</h1>
-          <p className="text-xl opacity-95">287 startups building solutions across 15+ sectors</p>
+          <p className="text-xl opacity-95">{startups.length}+ startups building solutions across 15+ sectors</p>
         </motion.div>
       </section>
 
       <section className="max-w-6xl mx-auto py-16 px-6">
         <div className="flex flex-wrap gap-3 mb-8">
-          <Badge variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">All</Badge>
-          {["AI/ML", "HealthTech", "FinTech", "EdTech", "AgriTech", "CleanTech"].map(sector => (
-            <Badge key={sector} variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
+          <Badge 
+            variant={!selectedSector ? "default" : "outline"} 
+            className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+            onClick={() => setSelectedSector(null)}
+          >
+            All
+          </Badge>
+          {sectors.map(sector => (
+            <Badge 
+              key={sector} 
+              variant={selectedSector === sector ? "default" : "outline"} 
+              className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+              onClick={() => setSelectedSector(sector)}
+            >
               {sector}
             </Badge>
           ))}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground">Loading startups...</div>
+        ) : startups.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">No startups found in this category</div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-6">
           {startups.map((startup, i) => (
             <motion.div
               key={startup.name}
@@ -123,7 +107,7 @@ const Startups = () => {
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                   <Users className="w-4 h-4 text-primary" />
-                  {startup.team} team
+                  {startup.team_size} team
                 </span>
                 <span className="flex items-center gap-1.5 text-sm font-medium text-primary">
                   <TrendingUp className="w-4 h-4" />
@@ -132,7 +116,8 @@ const Startups = () => {
               </div>
             </motion.div>
           ))}
-        </div>
+          </div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -142,7 +127,7 @@ const Startups = () => {
         >
           <h3 className="text-2xl font-bold mb-3">Is your startup a good fit?</h3>
           <p className="text-muted-foreground mb-6">Join our portfolio of high-growth companies transforming industries</p>
-          <Button size="lg" className="gap-2">
+          <Button size="lg" className="gap-2" onClick={() => navigate('/apply')}>
             Apply to Incubation Program <ExternalLink className="w-4 h-4" />
           </Button>
         </motion.div>
