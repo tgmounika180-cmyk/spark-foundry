@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { AuthModal } from "./AuthModal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useMyRoles } from "@/hooks/use-my-roles";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -22,6 +23,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { isAdmin } = useMyRoles();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -70,6 +72,11 @@ const Navbar = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {isAdmin ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin">Admin Panel</Link>
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuItem asChild>
                     <Link to="/apply">My Applications</Link>
                   </DropdownMenuItem>
@@ -116,6 +123,11 @@ const Navbar = () => {
                 ))}
                 {user ? (
                   <>
+                    {isAdmin ? (
+                      <Link to="/admin" onClick={() => setIsOpen(false)}>
+                        <Button size="sm" variant="outline" className="w-full">Admin Panel</Button>
+                      </Link>
+                    ) : null}
                     <Link to="/apply" onClick={() => setIsOpen(false)}>
                       <Button size="sm" variant="outline" className="w-full">My Applications</Button>
                     </Link>
