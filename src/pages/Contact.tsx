@@ -1,10 +1,40 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Contact = () => {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const { error } = await supabase
+      .from('contact_submissions')
+      .insert({
+        full_name: formData.get('full_name') as string,
+        email: formData.get('email') as string,
+        subject: formData.get('subject') as string,
+        message: formData.get('message') as string,
+      });
+
+    setLoading(false);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Message sent!", description: "We'll get back to you soon." });
+      e.currentTarget.reset();
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <section className="py-20 px-6 gradient-hero text-primary-foreground">
@@ -26,24 +56,26 @@ const Contact = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-3xl font-bold mb-6">Send Us a Message</h2>
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Full Name</label>
-                <Input placeholder="John Doe" required />
+                <Input name="full_name" placeholder="John Doe" required />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Email Address</label>
-                <Input type="email" placeholder="john@example.com" required />
+                <Input name="email" type="email" placeholder="john@example.com" required />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Subject</label>
-                <Input placeholder="How can we help?" required />
+                <Input name="subject" placeholder="How can we help?" required />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Message</label>
-                <Textarea placeholder="Tell us more about your startup or inquiry..." rows={6} required />
+                <Textarea name="message" placeholder="Tell us more about your startup or inquiry..." rows={6} required />
               </div>
-              <Button className="w-full" size="lg" type="submit">Send Message</Button>
+              <Button className="w-full" size="lg" type="submit" disabled={loading}>
+                {loading ? "Sending..." : "Send Message"}
+              </Button>
             </form>
           </motion.div>
 

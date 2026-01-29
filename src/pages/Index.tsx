@@ -2,11 +2,13 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Rocket, Users, Target, Lightbulb, TrendingUp, Shield, Briefcase } from "lucide-react";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
-const stats = [
-  { label: "Startups Incubated", target: 287, suffix: "", icon: Rocket },
-  { label: "Mentors Onboarded", target: 142, suffix: "", icon: Users },
-  { label: "Programs Conducted", target: 96, suffix: "", icon: Target }
+const statsConfig = [
+  { label: "Startups Incubated", key: "startups_count" as const, suffix: "", icon: Rocket },
+  { label: "Mentors Onboarded", key: "mentors_count" as const, suffix: "", icon: Users },
+  { label: "Programs Conducted", key: "programs_count" as const, suffix: "", icon: Target }
 ];
 
 const services = [
@@ -58,6 +60,23 @@ const AnimatedCounter = ({ target, suffix = "" }: { target: number; suffix?: str
 };
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [stats, setStats] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { data } = await supabase.from('stats').select('*').single();
+      setStats(data);
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    fetchStats();
+  }, []);
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
@@ -76,10 +95,10 @@ const Index = () => {
             From ideation to scale, we offer mentorship, funding access, workspace, and a thriving entrepreneurial community.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="gap-2 shadow-lg">
+            <Button size="lg" variant="secondary" className="gap-2 shadow-lg" onClick={() => navigate('/apply')}>
               Apply for Incubation <ArrowRight className="w-5 h-5" />
             </Button>
-            <Button size="lg" variant="outline" className="bg-transparent border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary shadow-lg">
+            <Button size="lg" variant="outline" className="bg-transparent border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary shadow-lg" onClick={() => navigate('/mentors')}>
               Join as Mentor
             </Button>
           </div>
@@ -89,7 +108,7 @@ const Index = () => {
       {/* Stats */}
       <section className="py-20 px-6 bg-background">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-8">
-          {stats.map((stat, i) => (
+          {statsConfig.map((stat, i) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
@@ -100,7 +119,7 @@ const Index = () => {
             >
               <stat.icon className="w-10 h-10 text-primary mx-auto mb-3" />
               <div className="text-4xl font-bold mb-2">
-                <AnimatedCounter target={stat.target} suffix={stat.suffix} />
+                {stats ? <AnimatedCounter target={stats[stat.key] || 0} suffix={stat.suffix} /> : '0'}
               </div>
               <p className="text-sm text-muted-foreground">{stat.label}</p>
             </motion.div>
@@ -178,9 +197,9 @@ const Index = () => {
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to Build the Future?</h2>
           <p className="text-xl mb-8 opacity-95">
-            Join 287+ startups that chose Spark Foundry as their launchpad to success
+            Join {stats?.startups_count || 287}+ startups that chose Spark Foundry as their launchpad to success
           </p>
-          <Button size="lg" variant="secondary" className="gap-2 shadow-lg">
+          <Button size="lg" variant="secondary" className="gap-2 shadow-lg" onClick={() => navigate('/apply')}>
             Start Your Journey Today <ArrowRight className="w-5 h-5" />
           </Button>
         </motion.div>

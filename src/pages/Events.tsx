@@ -1,60 +1,65 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Clock, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-const upcomingEvents = [
-  { 
-    title: "Demo Day - Spring 2026 Cohort", 
-    date: "2026-02-15", 
-    time: "3:00 PM - 7:00 PM", 
-    location: "Spark Foundry Main Hall, Bangalore", 
-    type: "Demo Day",
-    description: "18 startups from our Spring cohort will pitch to 60+ investors. Open to all founders and investors."
-  },
-  { 
-    title: "Product-Market Fit Masterclass", 
-    date: "2026-02-20", 
-    time: "10:00 AM - 4:00 PM", 
-    location: "Virtual (Zoom)", 
-    type: "Workshop",
-    description: "Led by Rahul Vohra (Superhuman CEO). Learn frameworks for achieving PMF in B2B SaaS."
-  },
-  { 
-    title: "Fundraising 101: From Angel to Series A", 
-    date: "2026-02-28", 
-    time: "6:00 PM - 8:00 PM", 
-    location: "Mumbai Hub", 
-    type: "Workshop",
-    description: "Panel discussion with VCs from Sequoia, Accel, and Lightspeed on fundraising strategies."
-  },
-  { 
-    title: "Startup Legal & Compliance Bootcamp", 
-    date: "2026-03-05", 
-    time: "2:00 PM - 5:00 PM", 
-    location: "Delhi Hub", 
-    type: "Workshop",
-    description: "Everything founders need to know about company formation, cap tables, ESOP, and compliance."
-  },
-  { 
-    title: "Founder Networking Night", 
-    date: "2026-03-12", 
-    time: "7:00 PM - 9:30 PM", 
-    location: "Spark Foundry Bangalore", 
-    type: "Networking",
-    description: "Casual evening with 100+ founders, mentors, and investors. Food, drinks, and great conversations."
-  },
-  { 
-    title: "Growth Marketing Sprint", 
-    date: "2026-03-18", 
-    time: "10:00 AM - 6:00 PM", 
-    location: "Hyderabad Hub", 
-    type: "Workshop",
-    description: "Hands-on workshop on SEO, content marketing, paid ads, and growth hacking tactics."
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Events = () => {
+  const { toast } = useToast();
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    fetchEvents();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+  }, []);
+
+  const fetchEvents = async () => {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .gte('event_date', new Date().toISOString().split('T')[0])
+      .order('event_date', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching events:', error);
+    } else {
+      setEvents(data || []);
+    }
+    setLoading(false);
+  };
+
+  const handleRegister = async (eventId: string) => {
+    if (!user) {
+      toast({ title: "Please sign in", description: "You need to be signed in to register for events", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('event_registrations')
+      .insert({
+        event_id: eventId,
+        user_id: user.id,
+        full_name: user.user_metadata?.full_name || '',
+        email: user.email || ''
+      });
+
+    if (error) {
+      if (error.code === '23505') {
+        toast({ title: "Already registered", description: "You're already registered for this event" });
+      } else {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+    } else {
+      toast({ title: "Success", description: "You've been registered for this event!" });
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <section className="py-20 px-6 gradient-hero text-primary-foreground">
@@ -70,8 +75,13 @@ const Events = () => {
 
       <section className="max-w-6xl mx-auto py-16 px-6">
         <h2 className="text-3xl font-bold mb-8">Upcoming Events</h2>
-        <div className="space-y-6">
-          {upcomingEvents.map((event, i) => (
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground">Loading events...</div>
+        ) : events.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">No upcoming events at the moment. Check back soon!</div>
+        ) : (
+          <div className="space-y-6">
+            {events.map((event, i) => (
             <motion.div
               key={event.title}
               initial={{ opacity: 0, x: -20 }}
@@ -85,17 +95,17 @@ const Events = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
                     <h3 className="text-xl font-bold">{event.title}</h3>
-                    <Badge variant="secondary">{event.type}</Badge>
+                    <Badge variant="secondary">{event.event_type}</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{event.description}</p>
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <Calendar className="w-4 h-4 text-primary" />
-                      {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4 text-primary" />
-                      {event.time}
+                      {event.event_time}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <MapPin className="w-4 h-4 text-primary" />
@@ -103,11 +113,14 @@ const Events = () => {
                     </span>
                   </div>
                 </div>
-                <Button className="md:self-start">Register Free</Button>
+                <Button className="md:self-start" onClick={() => handleRegister(event.id)}>
+                  Register Free
+                </Button>
               </div>
             </motion.div>
           ))}
-        </div>
+          </div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
