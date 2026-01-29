@@ -1,14 +1,17 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Rocket, Users, Target, Lightbulb, TrendingUp, Shield, Briefcase } from "lucide-react";
+import { Rocket, Users, Target, Lightbulb, TrendingUp, Shield, Briefcase, Calendar } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { HeroBannerRotator } from "@/components/home/HeroBannerRotator";
+import { LatestPrograms } from "@/components/home/LatestPrograms";
+import { Link } from "react-router-dom";
 
 const statsConfig = [
   { label: "Startups Incubated", key: "startups_count" as const, suffix: "", icon: Rocket },
   { label: "Mentors Onboarded", key: "mentors_count" as const, suffix: "", icon: Users },
-  { label: "Programs Conducted", key: "programs_count" as const, suffix: "", icon: Target }
+  { label: "Total Programs", key: "programs_count" as const, suffix: "", icon: Target },
+  { label: "Total Events", key: "events_count" as const, suffix: "", icon: Calendar }
 ];
 
 const services = [
@@ -60,54 +63,23 @@ const AnimatedCounter = ({ target, suffix = "" }: { target: number; suffix?: str
 };
 
 const Index = () => {
-  const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
-  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
-      const { data } = await supabase.from('stats').select('*').single();
+      const { data } = await supabase.from('stats').select('*').maybeSingle();
       setStats(data);
     };
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
     fetchStats();
   }, []);
 
   return (
     <div className="min-h-screen">
-      {/* Hero */}
-      <section className="relative overflow-hidden py-32 px-6 gradient-hero text-primary-foreground">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="max-w-5xl mx-auto text-center"
-        >
-          <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
-            Empowering Startups.<br />Accelerating Innovation.
-          </h1>
-          <p className="text-xl md:text-2xl mb-10 opacity-95 max-w-3xl mx-auto">
-            Spark Foundry is India's leading incubation forum providing end-to-end support for early-stage startups. 
-            From ideation to scale, we offer mentorship, funding access, workspace, and a thriving entrepreneurial community.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="gap-2 shadow-lg" onClick={() => navigate('/apply')}>
-              Apply for Incubation <ArrowRight className="w-5 h-5" />
-            </Button>
-            <Button size="lg" variant="outline" className="bg-transparent border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary shadow-lg" onClick={() => navigate('/mentors')}>
-              Join as Mentor
-            </Button>
-          </div>
-        </motion.div>
-      </section>
+      <HeroBannerRotator />
 
       {/* Stats */}
       <section className="py-20 px-6 bg-background">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-8">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
           {statsConfig.map((stat, i) => (
             <motion.div
               key={stat.label}
@@ -126,6 +98,8 @@ const Index = () => {
           ))}
         </div>
       </section>
+
+      <LatestPrograms />
 
       {/* Services */}
       <section className="py-20 px-6">
@@ -199,8 +173,8 @@ const Index = () => {
           <p className="text-xl mb-8 opacity-95">
             Join {stats?.startups_count || 287}+ startups that chose Spark Foundry as their launchpad to success
           </p>
-          <Button size="lg" variant="secondary" className="gap-2 shadow-lg" onClick={() => navigate('/apply')}>
-            Start Your Journey Today <ArrowRight className="w-5 h-5" />
+          <Button size="lg" variant="secondary" className="gap-2 shadow-lg" asChild>
+            <Link to="/apply">Start Your Journey Today</Link>
           </Button>
         </motion.div>
       </section>
