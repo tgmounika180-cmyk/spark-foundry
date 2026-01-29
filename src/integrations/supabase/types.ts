@@ -14,10 +14,276 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          created_at: string | null
+          id: string
+          program_type: string
+          stage: string | null
+          startup_description: string | null
+          startup_name: string
+          status: string | null
+          team_size: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          program_type: string
+          stage?: string | null
+          startup_description?: string | null
+          startup_name: string
+          status?: string | null
+          team_size?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          program_type?: string
+          stage?: string | null
+          startup_description?: string | null
+          startup_name?: string
+          status?: string | null
+          team_size?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      contact_submissions: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          message: string
+          status: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          message: string
+          status?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          message?: string
+          status?: string | null
+          subject?: string
+        }
+        Relationships: []
+      }
+      event_registrations: {
+        Row: {
+          created_at: string | null
+          email: string
+          event_id: string | null
+          full_name: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          event_id?: string | null
+          full_name: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          event_id?: string | null
+          full_name?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          event_date: string
+          event_time: string
+          event_type: string
+          id: string
+          is_virtual: boolean | null
+          location: string
+          max_attendees: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          event_date: string
+          event_time: string
+          event_type: string
+          id?: string
+          is_virtual?: boolean | null
+          location: string
+          max_attendees?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          event_date?: string
+          event_time?: string
+          event_type?: string
+          id?: string
+          is_virtual?: boolean | null
+          location?: string
+          max_attendees?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      mentors: {
+        Row: {
+          background: string | null
+          companies: string | null
+          created_at: string | null
+          expertise: string[]
+          id: string
+          is_active: boolean | null
+          linkedin_url: string | null
+          name: string
+          role: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          background?: string | null
+          companies?: string | null
+          created_at?: string | null
+          expertise: string[]
+          id?: string
+          is_active?: boolean | null
+          linkedin_url?: string | null
+          name: string
+          role: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          background?: string | null
+          companies?: string | null
+          created_at?: string | null
+          expertise?: string[]
+          id?: string
+          is_active?: boolean | null
+          linkedin_url?: string | null
+          name?: string
+          role?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      startups: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_featured: boolean | null
+          name: string
+          sector: string
+          stage: string
+          status: string | null
+          team_size: number | null
+          traction: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_featured?: boolean | null
+          name: string
+          sector: string
+          stage: string
+          status?: string | null
+          team_size?: number | null
+          traction?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_featured?: boolean | null
+          name?: string
+          sector?: string
+          stage?: string
+          status?: string | null
+          team_size?: number | null
+          traction?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      stats: {
+        Row: {
+          mentors_count: number | null
+          programs_count: number | null
+          startups_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
