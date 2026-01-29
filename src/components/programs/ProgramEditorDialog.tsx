@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { StorageUploadButton } from "@/components/admin/StorageUploadButton";
 import {
   Select,
   SelectContent,
@@ -34,6 +36,7 @@ export type ProgramRow = {
   application_url: string | null;
   image_url: string | null;
   is_active: boolean;
+  applications_open?: boolean;
 };
 
 const schema = z.object({
@@ -44,6 +47,7 @@ const schema = z.object({
   application_url: z.string().trim().url().optional().nullable(),
   image_url: z.string().trim().url().optional().nullable(),
   is_active: z.boolean().default(true),
+  applications_open: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -70,6 +74,7 @@ export function ProgramEditorDialog({
       application_url: "",
       image_url: "",
       is_active: true,
+      applications_open: true,
     },
   });
 
@@ -83,6 +88,7 @@ export function ProgramEditorDialog({
       application_url: initial?.application_url ?? "",
       image_url: initial?.image_url ?? "",
       is_active: initial?.is_active ?? true,
+      applications_open: initial?.applications_open ?? true,
     });
   }, [open, initial, form]);
 
@@ -95,6 +101,7 @@ export function ProgramEditorDialog({
       application_url: values.application_url || null,
       image_url: values.image_url || null,
       is_active: values.is_active,
+      applications_open: values.applications_open,
     };
 
     const { error } = initial?.id
@@ -164,6 +171,28 @@ export function ProgramEditorDialog({
           <div className="space-y-1.5">
             <Label htmlFor="program-image-url">Image URL (optional)</Label>
             <Input id="program-image-url" placeholder="https://..." {...form.register("image_url")} />
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm">
+              <div className="font-medium">Applications open</div>
+              <div className="text-muted-foreground text-xs">Controls whether new applications are accepted.</div>
+            </div>
+            <Switch
+              checked={form.watch("applications_open")}
+              onCheckedChange={(v) => form.setValue("applications_open", v)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm text-muted-foreground truncate">
+              Banner: {form.watch("image_url") || "(none)"}
+            </div>
+            <StorageUploadButton
+              label="Upload banner"
+              folder="program-banners"
+              onUploaded={(url) => form.setValue("image_url", url)}
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
