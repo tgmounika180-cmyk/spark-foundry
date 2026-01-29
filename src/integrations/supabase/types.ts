@@ -16,8 +16,10 @@ export type Database = {
     Tables: {
       applications: {
         Row: {
+          answers: Json
           created_at: string | null
           id: string
+          program_id: string | null
           program_type: string
           stage: string | null
           startup_description: string | null
@@ -28,8 +30,10 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          answers?: Json
           created_at?: string | null
           id?: string
+          program_id?: string | null
           program_type: string
           stage?: string | null
           startup_description?: string | null
@@ -40,8 +44,10 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          answers?: Json
           created_at?: string | null
           id?: string
+          program_id?: string | null
           program_type?: string
           stage?: string | null
           startup_description?: string | null
@@ -51,7 +57,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "applications_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contact_submissions: {
         Row: {
@@ -120,6 +134,7 @@ export type Database = {
       }
       events: {
         Row: {
+          banner_image_url: string | null
           created_at: string | null
           description: string | null
           event_date: string
@@ -129,10 +144,12 @@ export type Database = {
           is_virtual: boolean | null
           location: string
           max_attendees: number | null
+          online_url: string | null
           title: string
           updated_at: string | null
         }
         Insert: {
+          banner_image_url?: string | null
           created_at?: string | null
           description?: string | null
           event_date: string
@@ -142,10 +159,12 @@ export type Database = {
           is_virtual?: boolean | null
           location: string
           max_attendees?: number | null
+          online_url?: string | null
           title: string
           updated_at?: string | null
         }
         Update: {
+          banner_image_url?: string | null
           created_at?: string | null
           description?: string | null
           event_date?: string
@@ -155,6 +174,7 @@ export type Database = {
           is_virtual?: boolean | null
           location?: string
           max_attendees?: number | null
+          online_url?: string | null
           title?: string
           updated_at?: string | null
         }
@@ -277,6 +297,7 @@ export type Database = {
       programs: {
         Row: {
           application_url: string | null
+          applications_open: boolean
           category: Database["public"]["Enums"]["program_category"]
           created_at: string
           description: string | null
@@ -289,6 +310,7 @@ export type Database = {
         }
         Insert: {
           application_url?: string | null
+          applications_open?: boolean
           category: Database["public"]["Enums"]["program_category"]
           created_at?: string
           description?: string | null
@@ -301,6 +323,7 @@ export type Database = {
         }
         Update: {
           application_url?: string | null
+          applications_open?: boolean
           category?: Database["public"]["Enums"]["program_category"]
           created_at?: string
           description?: string | null
@@ -319,6 +342,7 @@ export type Database = {
           description: string | null
           id: string
           is_featured: boolean | null
+          is_public: boolean
           logo_url: string | null
           name: string
           sector: string
@@ -335,6 +359,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_featured?: boolean | null
+          is_public?: boolean
           logo_url?: string | null
           name: string
           sector: string
@@ -351,6 +376,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_featured?: boolean | null
+          is_public?: boolean
           logo_url?: string | null
           name?: string
           sector?: string
@@ -387,6 +413,59 @@ export type Database = {
       }
     }
     Views: {
+      admin_user_overview: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          roles: string[] | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
+      startups_public: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string | null
+          is_featured: boolean | null
+          logo_url: string | null
+          name: string | null
+          sector: string | null
+          stage: string | null
+          team_size: number | null
+          traction: string | null
+          website_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          is_featured?: boolean | null
+          logo_url?: string | null
+          name?: string | null
+          sector?: string | null
+          stage?: string | null
+          team_size?: number | null
+          traction?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          is_featured?: boolean | null
+          logo_url?: string | null
+          name?: string | null
+          sector?: string | null
+          stage?: string | null
+          team_size?: number | null
+          traction?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       stats: {
         Row: {
           events_count: number | null
