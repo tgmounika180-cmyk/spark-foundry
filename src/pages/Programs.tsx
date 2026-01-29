@@ -1,64 +1,73 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Zap, TrendingUp, CheckCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle, Plus, Pencil, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useMyRoles } from "@/hooks/use-my-roles";
+import { ProgramEditorDialog, ProgramRow } from "@/components/programs/ProgramEditorDialog";
 
-const programs = [
-  {
-    icon: Rocket,
-    title: "Pre-Incubation Program",
-    duration: "3 months",
-    description: "Perfect for early-stage ideas that need validation and initial direction. Designed for solo founders and small teams exploring problem-solution fit.",
-    features: [
-      "Bi-weekly ideation & brainstorming sessions",
-      "Market research & competitor analysis support",
-      "Customer discovery & validation frameworks",
-      "Basic pitch deck creation workshop",
-      "Access to co-working space (8 hours/week)",
-      "Introductory networking events"
-    ],
-    eligibility: "Anyone with a startup idea, no prior experience needed",
-    investment: "₹25,000 program fee"
-  },
-  {
-    icon: Zap,
-    title: "Core Incubation Program",
-    duration: "6 months",
-    description: "Comprehensive program for startups with validated MVP looking to achieve product-market fit and initial revenue traction.",
-    features: [
-      "Dedicated 1-on-1 mentor matching",
-      "Weekly office hours with industry experts",
-      "Full-time co-working space access",
-      "Legal, accounting, and compliance support",
-      "Introduction to angel investors & VCs",
-      "Cloud credits worth ₹2L (AWS/GCP/Azure)",
-      "Marketing & growth strategy workshops",
-      "Demo Day presentation opportunity"
-    ],
-    eligibility: "Working prototype/MVP, founding team committed full-time",
-    investment: "5-7% equity stake"
-  },
-  {
-    icon: TrendingUp,
-    title: "Accelerator Program",
-    duration: "4 months",
-    description: "High-intensity program for growth-stage startups ready to scale rapidly. Focus on metrics, fundraising, and exponential growth.",
-    features: [
-      "C-suite mentor access (CEOs, CTOs, CFOs)",
-      "Direct investor introductions & warm intros",
-      "Advanced growth hacking & marketing",
-      "Financial modeling & fundraising prep",
-      "Recruitment & team building support",
-      "International market entry guidance",
-      "PR & media coverage assistance",
-      "Curated investor Demo Day with 50+ VCs"
-    ],
-    eligibility: "₹50L+ ARR or significant user traction, Series A readiness",
-    investment: "3-5% equity stake"
-  }
-];
+type ProgramCategory = "pre-incubation" | "incubation" | "accelerator";
+
+const CATEGORY_LABEL: Record<ProgramCategory, string> = {
+  "pre-incubation": "Pre-Incubation",
+  incubation: "Incubation",
+  accelerator: "Accelerator",
+};
 
 const Programs = () => {
+  const { toast } = useToast();
+  const { isAdmin } = useMyRoles();
+  const [programs, setPrograms] = useState<ProgramRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState<ProgramCategory | "all">("all");
+
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<ProgramRow | null>(null);
+
+  const fetchPrograms = async () => {
+    setLoading(true);
+    let q = supabase
+      .from("programs")
+      .select(
+        "id,name,description,duration,category,application_url,image_url,is_active"
+      )
+      .order("created_at", { ascending: false });
+
+    if (category !== "all") q = q.eq("category", category);
+
+    const { data, error } = await q;
+    if (error) {
+      console.error("Error fetching programs:", error);
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      setPrograms([]);
+    } else {
+      setPrograms((data ?? []) as any);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPrograms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category]);
+
+  const filtered = useMemo(() => programs, [programs]);
+
+  const handleDelete = async (program: ProgramRow) => {
+    const ok = window.confirm(`Delete program "${program.name}"?`);
+    if (!ok) return;
+
+    const { error } = await supabase.from("programs").delete().eq("id", program.id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Deleted", description: "Program removed." });
+    fetchPrograms();
+  };
+
   return (
     <div className="min-h-screen">
       <section className="py-20 px-6 gradient-hero text-primary-foreground">
@@ -73,42 +82,125 @@ const Programs = () => {
       </section>
 
       <section className="max-w-6xl mx-auto py-16 px-6">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {programs.map((program, i) => (
-            <motion.div
-              key={program.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              whileHover={{ y: -8 }}
-              className="p-8 rounded-2xl gradient-card shadow-soft hover:shadow-lift transition-all flex flex-col"
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+          <div className="flex flex-wrap gap-2">
+            <Badge
+              variant={category === "all" ? "default" : "outline"}
+              className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+              onClick={() => setCategory("all")}
             >
-              <program.icon className="w-14 h-14 text-primary mb-4" />
-              <Badge variant="secondary" className="mb-3 w-fit">{program.duration}</Badge>
-              <h3 className="text-2xl font-bold mb-3">{program.title}</h3>
-              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{program.description}</p>
-              
-              <div className="mb-4">
-                <h4 className="font-semibold mb-2 text-sm">What You Get:</h4>
-                <ul className="space-y-2">
-                  {program.features.map(feature => (
-                    <li key={feature} className="flex items-start gap-2 text-xs">
-                      <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-muted-foreground">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              
-              <div className="mt-auto pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground mb-1"><strong>Eligibility:</strong> {program.eligibility}</p>
-                <p className="text-xs text-muted-foreground mb-4"><strong>Investment:</strong> {program.investment}</p>
-                <Button className="w-full">Apply to {program.title.split(' ')[0]}</Button>
-              </div>
-            </motion.div>
-          ))}
+              All
+            </Badge>
+            {(Object.keys(CATEGORY_LABEL) as ProgramCategory[]).map((c) => (
+              <Badge
+                key={c}
+                variant={category === c ? "default" : "outline"}
+                className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                onClick={() => setCategory(c)}
+              >
+                {CATEGORY_LABEL[c]}
+              </Badge>
+            ))}
+          </div>
+
+          {isAdmin ? (
+            <Button
+              className="gap-2"
+              onClick={() => {
+                setEditing(null);
+                setEditorOpen(true);
+              }}
+            >
+              <Plus className="w-4 h-4" /> New Program
+            </Button>
+          ) : null}
         </div>
+
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground">Loading programs...</div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            No programs found.
+          </div>
+        ) : (
+          <div className="grid lg:grid-cols-3 gap-8">
+            {filtered.map((program, i) => (
+              <motion.div
+                key={program.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                whileHover={{ y: -8 }}
+                className="rounded-2xl gradient-card shadow-soft hover:shadow-lift transition-all flex flex-col overflow-hidden"
+              >
+                {program.image_url ? (
+                  <div className="aspect-[16/9] w-full">
+                    <img
+                      src={program.image_url}
+                      alt={program.name}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : null}
+
+                <div className="p-8 flex flex-col flex-1">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <Badge variant="secondary" className="w-fit">
+                      {CATEGORY_LABEL[program.category]}
+                    </Badge>
+                    {program.duration ? (
+                      <span className="text-xs text-muted-foreground">{program.duration}</span>
+                    ) : null}
+                  </div>
+
+                  <h3 className="text-2xl font-bold mb-3">{program.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-6 leading-relaxed line-clamp-5">
+                    {program.description}
+                  </p>
+
+                  <div className="mt-auto pt-4 border-t border-border">
+                    <Button
+                      className="w-full"
+                      onClick={() => {
+                        const href = program.application_url?.trim();
+                        if (href) window.open(href, "_blank", "noopener,noreferrer");
+                        else window.location.assign(`/apply?programId=${program.id}`);
+                      }}
+                    >
+                      Apply
+                    </Button>
+
+                    {isAdmin ? (
+                      <div className="mt-3 flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-2 flex-1"
+                          onClick={() => {
+                            setEditing(program);
+                            setEditorOpen(true);
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" /> Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-2 flex-1"
+                          onClick={() => handleDelete(program)}
+                        >
+                          <Trash2 className="w-4 h-4" /> Delete
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -121,6 +213,13 @@ const Programs = () => {
           <Button variant="outline" size="lg">Book Free Consultation</Button>
         </motion.div>
       </section>
+
+      <ProgramEditorDialog
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        initial={editing}
+        onSaved={fetchPrograms}
+      />
     </div>
   );
 };
