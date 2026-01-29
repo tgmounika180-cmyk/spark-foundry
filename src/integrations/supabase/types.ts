@@ -160,9 +160,49 @@ export type Database = {
         }
         Relationships: []
       }
+      hero_banners: {
+        Row: {
+          created_at: string
+          cta_href: string | null
+          cta_label: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          sort_order: number
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cta_href?: string | null
+          cta_label?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          sort_order?: number
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cta_href?: string | null
+          cta_label?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          sort_order?: number
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mentors: {
         Row: {
           background: string | null
+          bio: string | null
           companies: string | null
           created_at: string | null
           expertise: string[]
@@ -170,12 +210,14 @@ export type Database = {
           is_active: boolean | null
           linkedin_url: string | null
           name: string
+          photo_url: string | null
           role: string
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           background?: string | null
+          bio?: string | null
           companies?: string | null
           created_at?: string | null
           expertise: string[]
@@ -183,12 +225,14 @@ export type Database = {
           is_active?: boolean | null
           linkedin_url?: string | null
           name: string
+          photo_url?: string | null
           role: string
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           background?: string | null
+          bio?: string | null
           companies?: string | null
           created_at?: string | null
           expertise?: string[]
@@ -196,6 +240,7 @@ export type Database = {
           is_active?: boolean | null
           linkedin_url?: string | null
           name?: string
+          photo_url?: string | null
           role?: string
           updated_at?: string | null
           user_id?: string | null
@@ -229,12 +274,52 @@ export type Database = {
         }
         Relationships: []
       }
+      programs: {
+        Row: {
+          application_url: string | null
+          category: Database["public"]["Enums"]["program_category"]
+          created_at: string
+          description: string | null
+          duration: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          application_url?: string | null
+          category: Database["public"]["Enums"]["program_category"]
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          application_url?: string | null
+          category?: Database["public"]["Enums"]["program_category"]
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       startups: {
         Row: {
           created_at: string | null
           description: string | null
           id: string
           is_featured: boolean | null
+          logo_url: string | null
           name: string
           sector: string
           stage: string
@@ -243,12 +328,14 @@ export type Database = {
           traction: string | null
           updated_at: string | null
           user_id: string | null
+          website_url: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
           id?: string
           is_featured?: boolean | null
+          logo_url?: string | null
           name: string
           sector: string
           stage: string
@@ -257,12 +344,14 @@ export type Database = {
           traction?: string | null
           updated_at?: string | null
           user_id?: string | null
+          website_url?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
           id?: string
           is_featured?: boolean | null
+          logo_url?: string | null
           name?: string
           sector?: string
           stage?: string
@@ -271,6 +360,28 @@ export type Database = {
           traction?: string | null
           updated_at?: string | null
           user_id?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -278,6 +389,7 @@ export type Database = {
     Views: {
       stats: {
         Row: {
+          events_count: number | null
           mentors_count: number | null
           programs_count: number | null
           startups_count: number | null
@@ -286,10 +398,17 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "startup" | "mentor" | "investor"
+      program_category: "pre-incubation" | "incubation" | "accelerator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -416,6 +535,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "startup", "mentor", "investor"],
+      program_category: ["pre-incubation", "incubation", "accelerator"],
+    },
   },
 } as const
