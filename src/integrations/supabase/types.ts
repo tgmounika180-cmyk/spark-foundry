@@ -270,6 +270,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          disabled: boolean
           email: string | null
           full_name: string | null
           id: string
@@ -278,6 +279,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          disabled?: boolean
           email?: string | null
           full_name?: string | null
           id: string
@@ -286,6 +288,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          disabled?: boolean
           email?: string | null
           full_name?: string | null
           id?: string
@@ -484,6 +487,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_disabled: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "startup" | "mentor" | "investor"
