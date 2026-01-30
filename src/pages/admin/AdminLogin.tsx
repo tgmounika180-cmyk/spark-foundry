@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -14,11 +14,36 @@ export default function AdminLogin() {
   const { toast } = useToast();
   const { isAdmin, loading } = useMyRoles();
 
+  const [me, setMe] = useState<{ id: string; email?: string | null } | null>(null);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const from = (location.state as any)?.from ?? "/admin";
+
+  const signedIn = useMemo(() => !!me?.id, [me?.id]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadMe = async () => {
+      const { data } = await supabase.auth.getSession();
+      const user = data.session?.user;
+      if (!mounted) return;
+      setMe(user ? { id: user.id, email: user.email } : null);
+    };
+
+    loadMe();
+    const { data } = supabase.auth.onAuthStateChange(() => {
+      loadMe();
+    });
+
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (!loading && isAdmin) {
@@ -50,6 +75,21 @@ export default function AdminLogin() {
     toast({ title: "Signed in", description: "Checking admin access…" });
   };
 
+  const onSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({ title: "Signed out" });
+  };
+
+  const copyUserId = async () => {
+    if (!me?.id) return;
+    try {
+      await navigator.clipboard.writeText(me.id);
+      toast({ title: "Copied", description: "Your user ID was copied to clipboard." });
+    } catch {
+      toast({ title: "Copy failed", description: "Please copy it manually.", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="min-h-[calc(100vh-3rem)] flex items-center justify-center p-6">
       <Card className="w-full max-w-md p-6 shadow-soft">
@@ -57,6 +97,25 @@ export default function AdminLogin() {
           <h1 className="text-2xl font-bold">Admin login</h1>
           <p className="text-sm text-muted-foreground">Sign in with an admin account to access the dashboard.</p>
         </div>
+
+        {signedIn && !loading && !isAdmin ? (
+          <div className="mb-4 rounded-md border border-border bg-muted/30 p-3 text-sm">
+            <div className="font-medium">You’re signed in, but this account is not an admin.</div>
+            <div className="text-muted-foreground mt-1 break-all">Signed in as: {me?.email ?? "(no email)"}</div>
+            <div className="text-muted-foreground break-all">User ID: {me?.id}</div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={copyUserId}>
+                Copy user ID
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={onSignOut}>
+                Sign out
+              </Button>
+            </div>
+            <div className="text-muted-foreground mt-2">
+              Ask an existing admin to grant your account the <span className="font-medium">admin</span> role.
+            </div>
+          </div>
+        ) : null}
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -83,7 +142,7 @@ export default function AdminLogin() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={submitting}>
+          <Button type="submit" className="w-full" disabled={submitting || (signedIn && !isAdmin)}>
             {submitting ? "Signing in…" : "Sign in"}
           </Button>
         </form>
